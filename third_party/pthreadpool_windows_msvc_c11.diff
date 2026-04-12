@@ -10,7 +10,7 @@ index e4f06f4..03b21e5 100644
 -        "-std=c11",
 -    ] + select({
 +    copts = select({
-+        "@bazel_tools//src/conditions:windows": ["/std:c11"],
++        "@bazel_tools//src/conditions:windows": ["/std:c11", "/experimental:c11atomics"],
 +        "//conditions:default": ["-std=c11"],
 +    }) + select({
          ":optimized_build": ["-O2"],

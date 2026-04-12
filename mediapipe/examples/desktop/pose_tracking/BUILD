@@ -25,6 +25,32 @@ licenses(["notice"])
 #   --input_video_path=<input video path> \
 #   --output_video_path=<output video path>
 cc_binary(
+    name = "pose_landmarks_async_cpu",
+    srcs = ["pose_landmarks_async_main.cc"],
+    data = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/modules/pose_landmark:pose_landmark_cpu",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_binary(
     name = "pose_tracking_cpu",
     data = [
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
