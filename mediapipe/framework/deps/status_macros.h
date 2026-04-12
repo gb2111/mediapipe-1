@@ -212,11 +212,19 @@
 
 // If the input is parenthesized, removes the parentheses. Otherwise expands to
 // the input unchanged.
+#if defined(_MSC_VER)
+// MSVC mis-expands the parenthesis stripping helper used by
+// MP_ASSIGN_OR_RETURN, leaving MP_STATUS_MACROS_IMPL_REM in the token stream.
+// Keeping the original lhs works for regular declarations and assignments used
+// throughout the Windows build.
+#define MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(...) __VA_ARGS__
+#else
 #define MP_STATUS_MACROS_IMPL_UNPARENTHESIZE_IF_PARENTHESIZED(...) \
   MP_STATUS_MACROS_IMPL_IF(                                        \
       MP_STATUS_MACROS_IMPL_IS_PARENTHESIZED(__VA_ARGS__),         \
       MP_STATUS_MACROS_IMPL_REM, MP_STATUS_MACROS_IMPL_EMPTY())    \
   __VA_ARGS__
+#endif
 
 // Internal helper for concatenating macro values.
 #define MP_STATUS_MACROS_IMPL_CONCAT_INNER_(x, y) x##y

@@ -113,12 +113,14 @@ TfLiteSignatureReader::GetInputOutputTensorNamesFromAllTfliteSignatures(
   std::vector<const std::string*> model_signature_keys =
       interpreter.signature_keys();
   for (const std::string* signature_key : model_signature_keys) {
-    MP_ASSIGN_OR_RETURN(
-        SignatureInputOutputTensorNames input_output_tensor_names,
+    auto input_output_tensor_names =
         GetInputOutputTensorNamesFromTfliteSignature(interpreter,
-                                                     signature_key));
+                                                     signature_key);
+    if (!input_output_tensor_names.ok()) {
+      return input_output_tensor_names.status();
+    }
     auto [unused_iter, was_inserted] =
-        result.insert({*signature_key, std::move(input_output_tensor_names)});
+        result.insert({*signature_key, std::move(*input_output_tensor_names)});
     RET_CHECK(was_inserted) << "Duplicate signature key: " << *signature_key
                             << ". Available signature keys: "
                             << absl::StrJoin(model_signature_keys, ", ");

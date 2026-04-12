@@ -14,6 +14,8 @@
 //
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
 // This example requires a linux computer and a GPU with EGL support drivers.
+#include <chrono>
+#include <cstdio>
 #include <cstdlib>
 
 #include "absl/flags/flag.h"
@@ -45,6 +47,15 @@ ABSL_FLAG(std::string, input_video_path, "",
 ABSL_FLAG(std::string, output_video_path, "",
           "Full path of where to save result (.mp4 only). "
           "If not provided, show result in a window.");
+
+void DrawFps(cv::Mat& frame, double fps) {
+  char fps_text[32];
+  std::snprintf(fps_text, sizeof(fps_text), "FPS: %.1f", fps);
+  cv::putText(frame, fps_text, cv::Point(16, 32), cv::FONT_HERSHEY_SIMPLEX,
+              0.9, cv::Scalar(0, 0, 0), 4);
+  cv::putText(frame, fps_text, cv::Point(16, 32), cv::FONT_HERSHEY_SIMPLEX,
+              0.9, cv::Scalar(0, 255, 0), 2);
+}
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
@@ -95,6 +106,10 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
+  using Clock = std::chrono::steady_clock;
+  auto last_frame_time = Clock::now();
+  bool has_previous_frame_time = false;
+  double displayed_fps = 0.0;
   while (grab_frames) {
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
@@ -168,6 +183,23 @@ absl::Status RunMPPGraph() {
       cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGBA2BGR);
     else
       cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+    const auto current_frame_time = Clock::now();
+    if (has_previous_frame_time) {
+      const auto frame_time_ms =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              current_frame_time - last_frame_time)
+              .count();
+      if (frame_time_ms > 0) {
+        const double instant_fps = 1000.0 / frame_time_ms;
+        displayed_fps =
+            displayed_fps == 0.0 ? instant_fps
+                                 : displayed_fps * 0.9 + instant_fps * 0.1;
+      }
+    } else {
+      has_previous_frame_time = true;
+    }
+    last_frame_time = current_frame_time;
+    DrawFps(output_frame_mat, displayed_fps);
     if (save_video) {
       if (!writer.isOpened()) {
         ABSL_LOG(INFO) << "Prepare video writer.";

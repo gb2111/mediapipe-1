@@ -320,6 +320,12 @@ http_archive(
 # pthreadpool is a dependency of XNNPACK, from 2025-09-08
 http_archive(
     name = "pthreadpool",
+    patch_args = [
+        "-p1",
+    ],
+    patches = [
+        "@//third_party:pthreadpool_windows_msvc_c11.diff",
+    ],
     # `curl -L <url> | shasum -a 256`
     sha256 = "d5a78b017839ee0474e6aef6e21742b03f641b260f29faf9538a0a6b8fae0704",
     strip_prefix = "pthreadpool-995229919303dd98c0f1b3b585b54527067ef893",
@@ -346,6 +352,7 @@ http_archive(
         # Works around Bazel issue with objc_library.
         # See https://github.com/bazelbuild/bazel/issues/19912
         "@//third_party:org_tensorflow_objc_build_fixes.diff",
+        "@//third_party:org_tensorflow_windows_disable_pthreadpool_without_xnnpack.diff",
     ],
     sha256 = _TENSORFLOW_SHA256,
     strip_prefix = "tensorflow-%s" % _TENSORFLOW_GIT_COMMIT,

@@ -27,11 +27,16 @@ licenses(["notice"])
 cc_binary(
     name = "holistic_tracking_cpu",
     data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_lite.tflite",
+        "//mediapipe/modules/hand_landmark:handedness.txt",
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
@@ -43,11 +48,16 @@ cc_binary(
 cc_binary(
     name = "holistic_tracking_gpu",
     data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_lite.tflite",
+        "//mediapipe/modules/hand_landmark:handedness.txt",
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",

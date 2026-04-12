@@ -19,6 +19,17 @@ node {
   }
 }
 
+# Selects the lite pose landmark model for better realtime performance.
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:model_complexity"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 0 }
+    }
+  }
+}
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -43,6 +54,7 @@ node {
 # Subgraph that detects poses and corresponding landmarks.
 node {
   calculator: "PoseLandmarkCpu"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"

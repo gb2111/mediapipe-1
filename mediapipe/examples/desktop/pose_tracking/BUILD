@@ -29,6 +29,7 @@ cc_binary(
     data = [
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
@@ -42,6 +43,7 @@ cc_binary(
     data = [
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",

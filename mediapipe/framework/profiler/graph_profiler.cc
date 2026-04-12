@@ -247,15 +247,18 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
   if (is_tracing_ && IsTraceIntervalEnabled(profiler_config_, tracer()) &&
       executor != nullptr) {
     // Inform the user via logging the path to the trace logs.
-    MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+    auto trace_log_path = GetTraceLogPath();
+    if (!trace_log_path.ok()) {
+      return trace_log_path.status();
+    }
     // Check that we can actually write to it.
     auto status =
-        file::SetContents(absl::StrCat(trace_log_path, "trace_writing_check"),
+        file::SetContents(absl::StrCat(*trace_log_path, "trace_writing_check"),
                           "can write trace logs to this location");
     if (status.ok()) {
-      ABSL_LOG(INFO) << "trace_log_path: " << trace_log_path;
+      ABSL_LOG(INFO) << "trace_log_path: " << *trace_log_path;
     } else {
-      ABSL_LOG(ERROR) << "cannot write to trace_log_path: " << trace_log_path
+      ABSL_LOG(ERROR) << "cannot write to trace_log_path: " << *trace_log_path
                       << ": " << status;
     }
 
@@ -677,10 +680,12 @@ absl::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
         "Trace log writing is disabled, unable to get trace_log_path.");
   }
   if (profiler_config_.trace_log_path().empty()) {
-    MP_ASSIGN_OR_RETURN(std::string directory_path,
-                        GetDefaultTraceLogDirectory());
+    auto directory_path = GetDefaultTraceLogDirectory();
+    if (!directory_path.ok()) {
+      return directory_path.status();
+    }
     std::string trace_log_path =
-        absl::StrCat(directory_path, "/", kDefaultLogFilePrefix);
+        absl::StrCat(*directory_path, "/", kDefaultLogFilePrefix);
     return trace_log_path;
   } else {
     return profiler_config_.trace_log_path();
@@ -728,7 +733,10 @@ absl::Status GraphProfiler::WriteProfile() {
     // Logging is disabled, so we can exit writing without error.
     return absl::OkStatus();
   }
-  MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+  auto trace_log_path = GetTraceLogPath();
+  if (!trace_log_path.ok()) {
+    return trace_log_path.status();
+  }
   int log_interval_count = GetLogIntervalCount(profiler_config_);
   int log_file_count = GetLogFileCount(profiler_config_);
   GraphProfile profile;
@@ -754,7 +762,7 @@ absl::Status GraphProfiler::WriteProfile() {
 
   // Write the GraphProfile to the trace_log_path.
   int log_index = previous_log_index / log_interval_count % log_file_count;
-  std::string log_path = absl::StrCat(trace_log_path, log_index, ".binarypb");
+  std::string log_path = absl::StrCat(*trace_log_path, log_index, ".binarypb");
   std::ofstream ofs;
   if (is_new_file) {
     ofs.open(log_path, std::ofstream::out | std::ofstream::trunc);

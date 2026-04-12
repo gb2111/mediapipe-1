@@ -1,0 +1,19 @@
+diff --git a/tensorflow/lite/kernels/BUILD b/tensorflow/lite/kernels/BUILD
+--- a/tensorflow/lite/kernels/BUILD
++++ b/tensorflow/lite/kernels/BUILD
+@@ -334,9 +334,12 @@ cc_library(
+         "//tensorflow/lite/core/c:common",
+         "//tensorflow/lite:macros",
+         "//tensorflow/lite:external_cpu_backend_context",
+-        "//tensorflow/lite/kernels/internal:compatibility",
+-        "@pthreadpool",
+-    ] + select({
++        "//tensorflow/lite/kernels/internal:compatibility",
++    ] + select({
++        "//tensorflow/lite:tflite_kernel_use_xnnpack_false": [],
++        "//tensorflow/lite:tflite_with_xnnpack_explicit_false": [],
++        "//conditions:default": ["@pthreadpool"],
++    }) + select({
+         # This select must match the similar select in `copts`
+         "//tensorflow:linux_ppc64le": [],
+         "//tensorflow:linux_s390x": [],

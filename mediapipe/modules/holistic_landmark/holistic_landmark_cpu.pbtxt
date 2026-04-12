@@ -120,6 +120,7 @@ node {
   calculator: "HandLandmarksLeftAndRightCpu"
   input_stream: "IMAGE:image"
   input_stream: "POSE_LANDMARKS:pose_landmarks"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
   output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
 }

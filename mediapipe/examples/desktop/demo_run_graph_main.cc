@@ -13,6 +13,8 @@
 // limitations under the License.
 //
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
+#include <chrono>
+#include <cstdio>
 #include <cstdlib>
 
 #include "absl/flags/flag.h"
@@ -32,15 +34,51 @@
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
 constexpr char kWindowName[] = "MediaPipe";
+#ifdef _WIN32
+constexpr char kDefaultCameraBackend[] = "dshow";
+#else
+constexpr char kDefaultCameraBackend[] = "any";
+#endif
 
 ABSL_FLAG(std::string, calculator_graph_config_file, "",
           "Name of file containing text format CalculatorGraphConfig proto.");
 ABSL_FLAG(std::string, input_video_path, "",
           "Full path of video to load. "
           "If not provided, attempt to use a webcam.");
+ABSL_FLAG(int, camera_id, 0,
+          "Camera index to open when input_video_path is not provided.");
+ABSL_FLAG(std::string, camera_backend, kDefaultCameraBackend,
+          "Camera backend: any, dshow, msmf.");
 ABSL_FLAG(std::string, output_video_path, "",
           "Full path of where to save result (.mp4 only). "
           "If not provided, show result in a window.");
+
+void DrawFps(cv::Mat& frame, double fps) {
+  char fps_text[32];
+  std::snprintf(fps_text, sizeof(fps_text), "FPS: %.1f", fps);
+  cv::putText(frame, fps_text, cv::Point(16, 32), cv::FONT_HERSHEY_SIMPLEX,
+              0.9, cv::Scalar(0, 0, 0), 4);
+  cv::putText(frame, fps_text, cv::Point(16, 32), cv::FONT_HERSHEY_SIMPLEX,
+              0.9, cv::Scalar(0, 255, 0), 2);
+}
+
+int GetCameraBackend() {
+  const std::string backend = absl::GetFlag(FLAGS_camera_backend);
+  if (backend == "any") {
+    return cv::CAP_ANY;
+  }
+#ifdef _WIN32
+  if (backend == "dshow") {
+    return cv::CAP_DSHOW;
+  }
+  if (backend == "msmf") {
+    return cv::CAP_MSMF;
+  }
+#endif
+  ABSL_LOG(WARNING) << "Unknown camera backend: " << backend
+                    << ". Falling back to CAP_ANY.";
+  return cv::CAP_ANY;
+}
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
@@ -63,7 +101,11 @@ absl::Status RunMPPGraph() {
   if (load_video) {
     capture.open(absl::GetFlag(FLAGS_input_video_path));
   } else {
-    capture.open(0);
+    const int camera_id = absl::GetFlag(FLAGS_camera_id);
+    const int backend = GetCameraBackend();
+    ABSL_LOG(INFO) << "Opening camera_id=" << camera_id
+                   << " with backend=" << absl::GetFlag(FLAGS_camera_backend);
+    capture.open(camera_id, backend);
   }
   RET_CHECK(capture.isOpened());
 
@@ -85,6 +127,10 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
+  using Clock = std::chrono::steady_clock;
+  auto last_frame_time = Clock::now();
+  bool has_previous_frame_time = false;
+  double displayed_fps = 0.0;
   while (grab_frames) {
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
@@ -125,6 +171,23 @@ absl::Status RunMPPGraph() {
     // Convert back to opencv for display or saving.
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
     cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+    const auto current_frame_time = Clock::now();
+    if (has_previous_frame_time) {
+      const auto frame_time_ms =
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              current_frame_time - last_frame_time)
+              .count();
+      if (frame_time_ms > 0) {
+        const double instant_fps = 1000.0 / frame_time_ms;
+        displayed_fps =
+            displayed_fps == 0.0 ? instant_fps
+                                 : displayed_fps * 0.9 + instant_fps * 0.1;
+      }
+    } else {
+      has_previous_frame_time = true;
+    }
+    last_frame_time = current_frame_time;
+    DrawFps(output_frame_mat, displayed_fps);
     if (save_video) {
       if (!writer.isOpened()) {
         ABSL_LOG(INFO) << "Prepare video writer.";

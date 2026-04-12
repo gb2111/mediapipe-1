@@ -8,6 +8,10 @@ input_stream: "IMAGE:input_video"
 # (NormalizedLandmarkList)
 input_stream: "HAND_LANDMARKS_FROM_POSE:hand_landmarks_from_pose"
 
+# Hand landmark model complexity: 0 for lite, 1 for full. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Hand landmarks. (NormalizedLandmarkList)
 output_stream: "HAND_LANDMARKS:hand_landmarks"
 
@@ -74,5 +78,6 @@ node {
   calculator: "HandLandmarkCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "ROI:hand_tracking_roi"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   output_stream: "LANDMARKS:hand_landmarks"
 }

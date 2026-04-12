@@ -426,13 +426,12 @@ struct First {
   using type = T;
 };
 
-template <typename T, int&... DoNotSpecify, typename F>
+template <typename T, typename F>
 auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   return std::forward<F>(visitor)(packet.Get<T>());
 }
 
-template <typename T, typename U, typename... Rest, int&... DoNotSpecify,
-          typename F>
+template <typename T, typename U, typename... Rest, typename F>
 auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   if (packet.ValidateAsType<T>().ok()) {
     return std::forward<F>(visitor)(packet.Get<T>());
@@ -441,14 +440,13 @@ auto VisitPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   }
 }
 
-template <typename T, int&... DoNotSpecify, typename F>
+template <typename T, typename F>
 auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   ABSL_CHECK_OK(packet.ValidateAsType<T>());
   return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());
 }
 
-template <typename T, typename U, typename... Rest, int&... DoNotSpecify,
-          typename F>
+template <typename T, typename U, typename... Rest, typename F>
 auto VisitPacketAsPacketOrDie(F&& visitor, const mediapipe::Packet& packet) {
   if (packet.ValidateAsType<T>().ok()) {
     return std::forward<F>(visitor)(WrapLegacyPacket<T>(packet).value());

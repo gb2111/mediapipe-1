@@ -33,7 +33,9 @@
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID
+#if !MEDIAPIPE_DISABLE_TFLITE_XNNPACK
 #include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
+#endif
 
 namespace mediapipe {
 namespace api2 {
@@ -146,6 +148,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
   }
 #endif  // MEDIAPIPE_ANDROID
 
+#if !MEDIAPIPE_DISABLE_TFLITE_XNNPACK
 #if defined(__EMSCRIPTEN__) || MEDIAPIPE_FORCE_CPU_INFERENCE
   const bool use_xnnpack = true;
 #else
@@ -159,6 +162,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
     return TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                              &TfLiteXNNPackDelegateDelete);
   }
+#endif  // !MEDIAPIPE_DISABLE_TFLITE_XNNPACK
 
   return nullptr;
 }

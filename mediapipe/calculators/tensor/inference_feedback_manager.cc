@@ -48,9 +48,13 @@ absl::Status InferenceFeedbackManager::Init(
     const InputOutputTensorNames& input_output_tensor_names,
     tflite::Interpreter* interpreter) {
   interpreter_ = interpreter;
-  MP_ASSIGN_OR_RETURN(feedback_tensor_indices_links_,
-                      ConvertSignatureTensorNamesToModelIndices(
-                          io_config, input_output_tensor_names));
+  auto feedback_tensor_indices_links =
+      ConvertSignatureTensorNamesToModelIndices(io_config,
+                                                input_output_tensor_names);
+  if (!feedback_tensor_indices_links.ok()) {
+    return feedback_tensor_indices_links.status();
+  }
+  feedback_tensor_indices_links_ = std::move(*feedback_tensor_indices_links);
 
   for (const auto& link : feedback_tensor_indices_links_) {
     const auto [output_unused_iter, output_was_inserted] =

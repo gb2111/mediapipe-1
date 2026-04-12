@@ -270,18 +270,26 @@ class OneEuroFilterImpl : public LandmarksFilter {
     }
 
     for (int i = 0; i < n_landmarks; ++i) {
-      MP_ASSIGN_OR_RETURN(auto filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
-      x_filters_.push_back(std::move(filter));
-      MP_ASSIGN_OR_RETURN(filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
-      y_filters_.push_back(std::move(filter));
-      MP_ASSIGN_OR_RETURN(filter,
-                          OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
-                                                derivate_cutoff_));
-      z_filters_.push_back(std::move(filter));
+      auto x_filter = OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                            derivate_cutoff_);
+      if (!x_filter.ok()) {
+        return x_filter.status();
+      }
+      x_filters_.push_back(std::move(*x_filter));
+
+      auto y_filter = OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                            derivate_cutoff_);
+      if (!y_filter.ok()) {
+        return y_filter.status();
+      }
+      y_filters_.push_back(std::move(*y_filter));
+
+      auto z_filter = OneEuroFilter::Create(frequency_, min_cutoff_, beta_,
+                                            derivate_cutoff_);
+      if (!z_filter.ok()) {
+        return z_filter.status();
+      }
+      z_filters_.push_back(std::move(*z_filter));
     }
 
     return absl::OkStatus();
@@ -408,9 +416,11 @@ absl::StatusOr<LandmarksFilter*> MultiLandmarkFilters::GetOrCreate(
     return it->second.get();
   }
 
-  MP_ASSIGN_OR_RETURN(auto landmarks_filter,
-                      InitializeLandmarksFilter(options));
-  filters_[tracking_id] = std::move(landmarks_filter);
+  auto landmarks_filter = InitializeLandmarksFilter(options);
+  if (!landmarks_filter.ok()) {
+    return landmarks_filter.status();
+  }
+  filters_[tracking_id] = std::move(*landmarks_filter);
   return filters_[tracking_id].get();
 }
 

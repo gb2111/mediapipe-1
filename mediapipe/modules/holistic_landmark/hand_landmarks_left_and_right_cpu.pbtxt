@@ -8,6 +8,10 @@ input_stream: "IMAGE:input_video"
 # Pose landmarks to derive initial hand location from. (NormalizedLandmarkList)
 input_stream: "POSE_LANDMARKS:pose_landmarks"
 
+# Hand landmark model complexity: 0 for lite, 1 for full. If unspecified,
+# functions as set to 1. (int)
+input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+
 # Left hand landmarks. (NormalizedLandmarkList)
 output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
 # RIght hand landmarks. (NormalizedLandmarkList)
@@ -41,6 +45,7 @@ node {
   calculator: "HandLandmarksFromPoseCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "HAND_LANDMARKS_FROM_POSE:left_hand_landmarks_from_pose"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   output_stream: "HAND_LANDMARKS:left_hand_landmarks"
   # Debug outputs.
   output_stream: "HAND_ROI_FROM_POSE:left_hand_roi_from_pose"
@@ -68,6 +73,7 @@ node {
   calculator: "HandLandmarksFromPoseCpu"
   input_stream: "IMAGE:input_video"
   input_stream: "HAND_LANDMARKS_FROM_POSE:right_hand_landmarks_from_pose"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   output_stream: "HAND_LANDMARKS:right_hand_landmarks"
   # Debug outputs.
   output_stream: "HAND_ROI_FROM_POSE:right_hand_roi_from_pose"

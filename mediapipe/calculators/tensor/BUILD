@@ -419,6 +419,14 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+config_setting(
+    name = "disable_tflite_xnnpack",
+    values = {
+        "define": "tflite_with_xnnpack=false",
+    },
+    visibility = ["//visibility:public"],
+)
+
 # This target defines the "InferenceCalculator" component, which looks for the available concrete
 # implementations linked into the current binary and picks the one to use.
 # You can depend on :inference_calculator instead if you want to automatically include a default
@@ -434,6 +442,9 @@ cc_library_with_tflite(
     local_defines = select({
         ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
         "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
+    }) + select({
+        ":disable_tflite_xnnpack": ["MEDIAPIPE_DISABLE_TFLITE_XNNPACK=1"],
+        "//conditions:default": ["MEDIAPIPE_DISABLE_TFLITE_XNNPACK=0"],
     }),
     tflite_deps = [
         ":inference_runner",
@@ -794,6 +805,9 @@ cc_library(
     local_defines = select({
         ":force_cpu_inference": ["MEDIAPIPE_FORCE_CPU_INFERENCE=1"],
         "//conditions:default": ["MEDIAPIPE_FORCE_CPU_INFERENCE=0"],
+    }) + select({
+        ":disable_tflite_xnnpack": ["MEDIAPIPE_DISABLE_TFLITE_XNNPACK=1"],
+        "//conditions:default": ["MEDIAPIPE_DISABLE_TFLITE_XNNPACK=0"],
     }),
     deps = [
         ":inference_calculator_interface",
@@ -811,8 +825,13 @@ cc_library(
         "@com_google_absl//absl/time",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:c_api_types",
-        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate_hdrs_only",
     ] + select({
+        ":disable_tflite_xnnpack": [],
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+        ],
+    }) + select({
         "//conditions:default": [],
         "//mediapipe:android": ["@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate"],
     }),
@@ -939,8 +958,10 @@ cc_library(
     deps = [
         ":inference_calculator_cpu",
         ":inference_calculator_interface",
-        ":inference_calculator_xnnpack",
     ] + select({
+        ":disable_tflite_xnnpack": [],
+        "//conditions:default": [":inference_calculator_xnnpack"],
+    }) + select({
         "//conditions:default": [":inference_calculator_gl_if_compute_shader_available"],
         ":platform_apple_with_gpu": [":inference_calculator_metal"],
     }),
