@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /d/Repos/GitHub/mediapipe2/mediapipe/framework/*.h)",
+      "Bash(grep -r \"REGISTER_CALCULATOR\" /d/Repos/GitHub/mediapipe2/mediapipe/calculators/core/*.cc)",
+      "Bash(ls -la /d/Repos/GitHub/mediapipe2/mediapipe/framework/api*)"
+    ],
+    "additionalDirectories": [
+      "d:\\Repos\\GitHub\\mediapipe2\\.claude"
+    ]
+  }
+}
