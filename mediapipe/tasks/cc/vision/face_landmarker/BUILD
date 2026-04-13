@@ -219,6 +219,36 @@ cc_library(
 )
 
 cc_library(
+    name = "face_landmarker_roi_graph",
+    srcs = ["face_landmarker_roi_graph.cc"],
+    deps = [
+        ":face_landmarks_detector_graph",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core:model_asset_bundle_resources",
+        "//mediapipe/tasks/cc/core:model_resources_cache",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/metadata/utils:zip_utils",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_blendshapes_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "face_landmarks_connections",
     hdrs = ["face_landmarks_connections.h"],
 )

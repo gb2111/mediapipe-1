@@ -49,6 +49,33 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "face_mouth_landmarks_async_cpu",
+    srcs = ["face_mouth_landmarks_async_main.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:face_landmarker_v2_with_blendshapes.task",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_roi_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarks_connections",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "face_mesh_gpu",
