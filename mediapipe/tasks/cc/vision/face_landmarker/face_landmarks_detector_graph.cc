@@ -336,9 +336,13 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     landmarks_letterbox_removed >> landmark_projection.In(kNormLandmarksTag);
     face_rect >> landmark_projection.In(kNormRectTag);
     image_size >> landmark_projection.In("IMAGE_DIMENSIONS");
-    Stream<NormalizedLandmarkList> projected_landmarks = AllowIf(
-        landmark_projection[Output<NormalizedLandmarkList>(kNormLandmarksTag)],
-        presence, graph);
+    Stream<NormalizedLandmarkList> projected_landmarks =
+        subgraph_options.disable_presence_gating()
+            ? landmark_projection[Output<NormalizedLandmarkList>(
+                  kNormLandmarksTag)]
+            : AllowIf(landmark_projection[Output<NormalizedLandmarkList>(
+                          kNormLandmarksTag)],
+                      presence, graph);
 
     // Converts the face landmarks into a rectangle (normalized by image size)
     // that encloses the face.
@@ -363,9 +367,11 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
              .GetOptions<mediapipe::RectTransformationCalculatorOptions>());
     image_size >> face_rect_transformation.In(kImageSizeTag);
     face_landmarks_rect >> face_rect_transformation.In(kNormRectTag);
-    auto face_rect_next_frame =
-        AllowIf(face_rect_transformation.Out("").Cast<NormalizedRect>(),
-                presence, graph);
+    Stream<NormalizedRect> face_rect_next_frame =
+        subgraph_options.disable_presence_gating()
+            ? face_rect_transformation.Out("").Cast<NormalizedRect>()
+            : AllowIf(face_rect_transformation.Out("").Cast<NormalizedRect>(),
+                      presence, graph);
 
     return {{
         /* landmarks= */ projected_landmarks,

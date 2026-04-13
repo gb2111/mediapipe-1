@@ -122,17 +122,6 @@ void DrawFps(cv::Mat& frame, double display_fps, double inference_fps) {
               0.7, cv::Scalar(0, 255, 0), 2);
 }
 
-std::vector<int> BuildMouthIndices() {
-  std::unordered_set<int> unique;
-  for (const auto& connection :
-       mediapipe::tasks::vision::face_landmarker::FaceLandmarksConnections::
-           kFaceLandmarksLips) {
-    unique.insert(connection[0]);
-    unique.insert(connection[1]);
-  }
-  return std::vector<int>(unique.begin(), unique.end());
-}
-
 cv::Point LandmarkToPoint(const mediapipe::NormalizedLandmark& landmark,
                           const cv::Size& full_size,
                           const cv::Point& offset) {
@@ -141,16 +130,16 @@ cv::Point LandmarkToPoint(const mediapipe::NormalizedLandmark& landmark,
       static_cast<int>(landmark.y() * full_size.height) + offset.y);
 }
 
-void DrawMouthLandmarks(const mediapipe::NormalizedLandmarkList& landmarks,
-                        cv::Mat& frame, const cv::Size& full_size,
-                        const cv::Point& offset) {
+void DrawAllLandmarks(const mediapipe::NormalizedLandmarkList& landmarks,
+                      cv::Mat& frame, const cv::Size& full_size,
+                      const cv::Point& offset) {
   if (landmarks.landmark_size() == 0) {
     return;
   }
 
   for (const auto& connection :
        mediapipe::tasks::vision::face_landmarker::FaceLandmarksConnections::
-           kFaceLandmarksLips) {
+           kFaceLandmarksTesselation) {
     if (connection[0] >= landmarks.landmark_size() ||
         connection[1] >= landmarks.landmark_size()) {
       continue;
@@ -158,18 +147,14 @@ void DrawMouthLandmarks(const mediapipe::NormalizedLandmarkList& landmarks,
     const auto& start = landmarks.landmark(connection[0]);
     const auto& end = landmarks.landmark(connection[1]);
     cv::line(frame, LandmarkToPoint(start, full_size, offset),
-             LandmarkToPoint(end, full_size, offset), cv::Scalar(0, 255, 255), 2,
-             cv::LINE_AA);
+             LandmarkToPoint(end, full_size, offset), cv::Scalar(200, 200, 200),
+             1, cv::LINE_AA);
   }
 
-  static const std::vector<int> mouth_indices = BuildMouthIndices();
-  for (const int index : mouth_indices) {
-    if (index >= landmarks.landmark_size()) {
-      continue;
-    }
-    const auto& landmark = landmarks.landmark(index);
+  for (int i = 0; i < landmarks.landmark_size(); ++i) {
+    const auto& landmark = landmarks.landmark(i);
     cv::circle(frame, LandmarkToPoint(landmark, full_size, offset), 2,
-               cv::Scalar(255, 128, 0), cv::FILLED, cv::LINE_AA);
+               cv::Scalar(0, 255, 255), cv::FILLED, cv::LINE_AA);
   }
 }
 
@@ -272,6 +257,7 @@ mediapipe::CalculatorGraphConfig CreateGraphConfig(
               face_detector_graph_options { num_faces: 1 }
               face_landmarks_detector_graph_options {
                 min_detection_confidence: 0.0
+                disable_presence_gating: true
               }
             }
           }
@@ -505,8 +491,8 @@ absl::Status RunAsyncMouthLandmarks() {
     }
 
     if (has_landmarks) {
-      DrawMouthLandmarks(landmarks, camera_frame, camera_frame.size(),
-                         cv::Point(0, 0));
+      DrawAllLandmarks(landmarks, camera_frame, camera_frame.size(),
+                       cv::Point(0, 0));
     }
     if (absl::GetFlag(FLAGS_roi_mode) == "mouse") {
       cv::rectangle(camera_frame, face_roi_px, cv::Scalar(0, 255, 0), 2);
@@ -521,8 +507,8 @@ absl::Status RunAsyncMouthLandmarks() {
     if (roi_px.width > 0 && roi_px.height > 0) {
       crop_frame = camera_frame(roi_px).clone();
       if (has_landmarks) {
-        DrawMouthLandmarks(landmarks, crop_frame, camera_frame.size(),
-                           cv::Point(-roi_px.x, -roi_px.y));
+        DrawAllLandmarks(landmarks, crop_frame, camera_frame.size(),
+                         cv::Point(-roi_px.x, -roi_px.y));
       }
     } else {
       crop_frame = cv::Mat(200, 200, CV_8UC3, cv::Scalar(10, 10, 10));

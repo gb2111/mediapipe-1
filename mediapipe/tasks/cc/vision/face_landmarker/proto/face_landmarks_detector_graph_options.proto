@@ -44,6 +44,11 @@ message FaceLandmarksDetectorGraphOptions {
   // the returned landmarks list.
   optional bool smooth_landmarks = 4;
 
+  // Whether to bypass presence gating and always output landmarks/rects.
+  // When enabled, downstream calculators may receive landmarks even when the
+  // model's presence score is low.
+  optional bool disable_presence_gating = 5 [default = false];
+
   // Optional options for FaceBlendshapeGraph. If this options is set, the
   // FaceLandmarksDetectorGraph would output the face blendshapes.
   optional FaceBlendshapesGraphOptions face_blendshapes_graph_options = 3;
