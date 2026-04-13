@@ -19,6 +19,7 @@
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -304,6 +305,8 @@ absl::Status RunAsyncMouthLandmarks() {
           mediapipe::ImageFrame::kDefaultAlignmentBoundary);
       cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
       rgb_frame.copyTo(input_frame_mat);
+      std::shared_ptr<mediapipe::ImageFrame> shared_frame(input_frame.release());
+      mediapipe::Image image(shared_frame);
 
       const auto timestamp = mediapipe::Timestamp(frame.timestamp_us);
       auto status = graph.AddPacketToInputStream(
@@ -316,7 +319,8 @@ absl::Status RunAsyncMouthLandmarks() {
         continue;
       }
       status = graph.AddPacketToInputStream(
-          kInputStream, mediapipe::Adopt(input_frame.release()).At(timestamp));
+          kInputStream, mediapipe::MakePacket<mediapipe::Image>(image)
+                            .At(timestamp));
       if (!status.ok()) {
         ABSL_LOG(ERROR) << "Failed to add frame to graph: " << status.message();
         continue;

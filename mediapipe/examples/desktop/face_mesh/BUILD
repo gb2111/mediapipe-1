@@ -58,6 +58,7 @@ cc_binary(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:landmark_cc_proto",
