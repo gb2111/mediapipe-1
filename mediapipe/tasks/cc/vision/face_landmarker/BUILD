@@ -72,6 +72,7 @@ cc_library(
     deps = [
         ":face_blendshapes_graph",
         ":tensors_to_face_landmarks_graph",
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:get_vector_item_calculator",
