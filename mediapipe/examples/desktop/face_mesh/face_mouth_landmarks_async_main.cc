@@ -37,6 +37,7 @@ constexpr char kLandmarksStream[] = "landmarks";
 constexpr char kBlendshapesStream[] = "blendshapes";
 constexpr char kWindowName[] = "MediaPipe Mouth ROI";
 constexpr char kCropWindowName[] = "MediaPipe Mouth ROI (Crop)";
+constexpr char kBlendshapesWindowName[] = "MediaPipe Blendshapes";
 
 #ifdef _WIN32
 constexpr char kDefaultCameraBackend[] = "dshow";
@@ -55,11 +56,11 @@ ABSL_FLAG(std::string, model_path,
           "Path to face landmarker .task model bundle.");
 ABSL_FLAG(std::string, roi_mode, "mouse",
           "ROI mode: mouse or full. Mouse uses click-drag selection.");
-ABSL_FLAG(float, mouth_scale_x, 2.4f,
+ABSL_FLAG(float, mouth_scale_x, 1.0f,
           "Scale factor to expand mouth ROI into a virtual face ROI (width).");
-ABSL_FLAG(float, mouth_scale_y, 3.0f,
+ABSL_FLAG(float, mouth_scale_y, 2.0f,
           "Scale factor to expand mouth ROI into a virtual face ROI (height).");
-ABSL_FLAG(float, mouth_shift_y, 1.0f,
+ABSL_FLAG(float, mouth_shift_y, 0.25f,
           "Shift the virtual face ROI upward by this *mouth height* amount.");
 
 namespace {
@@ -156,6 +157,66 @@ void DrawAllLandmarks(const mediapipe::NormalizedLandmarkList& landmarks,
     cv::circle(frame, LandmarkToPoint(landmark, full_size, offset), 2,
                cv::Scalar(0, 255, 255), cv::FILLED, cv::LINE_AA);
   }
+}
+
+void DrawBlendshapeBar(cv::Mat& image, const cv::Rect& rect, float score,
+                       const cv::Scalar& fill_color,
+                       const cv::Scalar& bg_color) {
+  cv::rectangle(image, rect, bg_color, cv::FILLED);
+  const int filled =
+      static_cast<int>(std::round(rect.width * std::min(1.0f, std::max(0.0f, score))));
+  if (filled > 0) {
+    cv::Rect filled_rect(rect.x, rect.y, filled, rect.height);
+    cv::rectangle(image, filled_rect, fill_color, cv::FILLED);
+  }
+  cv::rectangle(image, rect, cv::Scalar(40, 40, 40), 1);
+}
+
+cv::Mat RenderBlendshapeWindow(
+    const mediapipe::ClassificationList& blendshapes) {
+  const int entry_count = blendshapes.classification_size();
+  const int columns = 2;
+  const int rows = (entry_count + columns - 1) / columns;
+  const int row_h = 22;
+  const int margin = 12;
+  const int col_w = 520;
+  const int value_w = 70;
+  const int name_w = 220;
+  const int bar_h = 12;
+  const int bar_pad_y = (row_h - bar_h) / 2;
+  const int bar_w = col_w - name_w - value_w - 24;
+  const int width = margin * 2 + col_w * columns;
+  const int height = std::max(160, margin * 2 + rows * row_h);
+
+  cv::Mat panel(height, width, CV_8UC3, cv::Scalar(22, 22, 22));
+  cv::putText(panel, "Blendshapes (0..1)", cv::Point(margin, margin - 2),
+              cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(220, 220, 220), 1);
+
+  for (int i = 0; i < entry_count; ++i) {
+    const int col = i / rows;
+    const int row = i % rows;
+    const int x0 = margin + col * col_w;
+    const int y0 = margin + row * row_h;
+    const auto& cls = blendshapes.classification(i);
+    const std::string label = cls.has_label() ? cls.label() : std::string("?");
+    const float score = cls.score();
+
+    cv::putText(panel, label, cv::Point(x0, y0 + row_h - 6),
+                cv::FONT_HERSHEY_SIMPLEX, 0.45, cv::Scalar(200, 200, 200), 1);
+
+    const int bar_x = x0 + name_w;
+    const int bar_y = y0 + bar_pad_y;
+    DrawBlendshapeBar(panel, cv::Rect(bar_x, bar_y, bar_w, bar_h), score,
+                      cv::Scalar(0, 180, 255), cv::Scalar(50, 50, 50));
+
+    char value_text[16];
+    std::snprintf(value_text, sizeof(value_text), "%.2f", score);
+    cv::putText(panel, value_text,
+                cv::Point(bar_x + bar_w + 8, y0 + row_h - 6),
+                cv::FONT_HERSHEY_SIMPLEX, 0.45, cv::Scalar(200, 200, 200), 1);
+  }
+
+  return panel;
 }
 
 mediapipe::NormalizedRect MakeNormalizedRect(const cv::Rect& roi,
@@ -292,6 +353,7 @@ absl::Status RunAsyncMouthLandmarks() {
 
   cv::namedWindow(kWindowName, 1);
   cv::namedWindow(kCropWindowName, 1);
+  cv::namedWindow(kBlendshapesWindowName, 1);
 
   RoiSelection roi_state;
   cv::setMouseCallback(kWindowName, UpdateRoiFromMouse, &roi_state);
@@ -429,12 +491,12 @@ absl::Status RunAsyncMouthLandmarks() {
     }
     cv::flip(camera_frame, camera_frame, 1);
 
+    const cv::Rect image_rect(0, 0, camera_frame.cols, camera_frame.rows);
     cv::Rect roi_px;
     if (absl::GetFlag(FLAGS_roi_mode) == "full") {
-      roi_px = cv::Rect(0, 0, camera_frame.cols, camera_frame.rows);
+      roi_px = image_rect;
     } else if (roi_state.has_roi) {
-      roi_px = roi_state.roi & cv::Rect(0, 0, camera_frame.cols,
-                                        camera_frame.rows);
+      roi_px = roi_state.roi;
     } else if (roi_state.dragging) {
       const int x0 = std::min(roi_state.start.x, roi_state.current.x);
       const int y0 = std::min(roi_state.start.y, roi_state.current.y);
@@ -442,11 +504,12 @@ absl::Status RunAsyncMouthLandmarks() {
       const int y1 = std::max(roi_state.start.y, roi_state.current.y);
       roi_px = cv::Rect(cv::Point(x0, y0), cv::Point(x1, y1));
     } else {
-      roi_px = cv::Rect(0, 0, camera_frame.cols, camera_frame.rows);
+      roi_px = image_rect;
     }
 
+    roi_px &= image_rect;
     if (roi_px.width < 1 || roi_px.height < 1) {
-      roi_px = cv::Rect(0, 0, camera_frame.cols, camera_frame.rows);
+      roi_px = image_rect;
     }
 
     cv::Rect face_roi_px = roi_px;
@@ -479,14 +542,20 @@ absl::Status RunAsyncMouthLandmarks() {
     state.frame_cv.notify_one();
 
     mediapipe::NormalizedLandmarkList landmarks;
+    mediapipe::ClassificationList blendshapes;
     double inference_fps = 0.0;
     bool has_landmarks = false;
+    bool has_blendshapes = false;
     {
       std::lock_guard<std::mutex> lock(state.result_mutex);
       has_landmarks = state.has_landmarks;
       inference_fps = state.inference_fps;
       if (has_landmarks) {
         landmarks = state.landmarks;
+      }
+      has_blendshapes = state.has_blendshapes;
+      if (has_blendshapes) {
+        blendshapes = state.blendshapes;
       }
     }
 
@@ -516,6 +585,16 @@ absl::Status RunAsyncMouthLandmarks() {
                   cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(200, 200, 200), 2);
     }
     cv::imshow(kCropWindowName, crop_frame);
+
+    if (has_blendshapes) {
+      cv::Mat blend_panel = RenderBlendshapeWindow(blendshapes);
+      cv::imshow(kBlendshapesWindowName, blend_panel);
+    } else {
+      cv::Mat empty_panel(200, 400, CV_8UC3, cv::Scalar(22, 22, 22));
+      cv::putText(empty_panel, "No blendshapes", cv::Point(16, 120),
+                  cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(200, 200, 200), 1);
+      cv::imshow(kBlendshapesWindowName, empty_panel);
+    }
 
     const int pressed_key = cv::waitKey(1);
     if (pressed_key >= 0 && pressed_key != 255) {
