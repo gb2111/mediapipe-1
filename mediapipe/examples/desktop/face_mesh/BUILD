@@ -53,7 +53,7 @@ cc_binary(
     name = "face_mouth_landmarks_async_cpu",
     srcs = ["face_mouth_landmarks_async_main.cc"],
     data = [
-        "//mediapipe/tasks/testdata/vision:face_landmarker_v2_with_blendshapes.task",
+        "//mediapipe/tasks/testdata/vision:face_landmarker_v2_with_blendshapes_task_public",
     ],
     deps = [
         "//mediapipe/framework:calculator_framework",

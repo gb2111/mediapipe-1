@@ -184,6 +184,12 @@ filegroup(
     ],
 )
 
+filegroup(
+    name = "face_landmarker_v2_with_blendshapes_task_public",
+    srcs = ["face_landmarker_v2_with_blendshapes.task"],
+    visibility = ["//visibility:public"],
+)
+
 # TODO Create individual filegroup for models required for each Tasks.
 filegroup(
     name = "test_models",
