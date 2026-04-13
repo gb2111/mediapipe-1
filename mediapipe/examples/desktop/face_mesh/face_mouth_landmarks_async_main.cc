@@ -55,6 +55,12 @@ ABSL_FLAG(std::string, model_path,
           "Path to face landmarker .task model bundle.");
 ABSL_FLAG(std::string, roi_mode, "mouse",
           "ROI mode: mouse or full. Mouse uses click-drag selection.");
+ABSL_FLAG(float, mouth_scale_x, 2.4f,
+          "Scale factor to expand mouth ROI into a virtual face ROI (width).");
+ABSL_FLAG(float, mouth_scale_y, 3.0f,
+          "Scale factor to expand mouth ROI into a virtual face ROI (height).");
+ABSL_FLAG(float, mouth_shift_y, 1.0f,
+          "Shift the virtual face ROI upward by this *mouth height* amount.");
 
 namespace {
 
@@ -180,6 +186,33 @@ mediapipe::NormalizedRect MakeNormalizedRect(const cv::Rect& roi,
   rect.set_width(std::min(1.0f, std::max(0.0f, rect.width())));
   rect.set_height(std::min(1.0f, std::max(0.0f, rect.height())));
   return rect;
+}
+
+cv::Rect ExpandMouthToFaceRect(const cv::Rect& mouth_roi,
+                               const cv::Size& size) {
+  const float scale_x = std::max(1.0f, absl::GetFlag(FLAGS_mouth_scale_x));
+  const float scale_y = std::max(1.0f, absl::GetFlag(FLAGS_mouth_scale_y));
+  const float shift_y = absl::GetFlag(FLAGS_mouth_shift_y);
+
+  const float mouth_cx = mouth_roi.x + mouth_roi.width * 0.5f;
+  const float mouth_cy = mouth_roi.y + mouth_roi.height * 0.5f;
+
+  const float face_w = mouth_roi.width * scale_x;
+  const float face_h = mouth_roi.height * scale_y;
+  const float face_cx = mouth_cx;
+  const float face_cy = mouth_cy - mouth_roi.height * shift_y;
+
+  int x0 = static_cast<int>(std::round(face_cx - face_w * 0.5f));
+  int y0 = static_cast<int>(std::round(face_cy - face_h * 0.5f));
+  int x1 = static_cast<int>(std::round(face_cx + face_w * 0.5f));
+  int y1 = static_cast<int>(std::round(face_cy + face_h * 0.5f));
+
+  cv::Rect face_roi(cv::Point(x0, y0), cv::Point(x1, y1));
+  face_roi &= cv::Rect(0, 0, size.width, size.height);
+  if (face_roi.width < 1 || face_roi.height < 1) {
+    return cv::Rect(0, 0, size.width, size.height);
+  }
+  return face_roi;
 }
 
 mediapipe::NormalizedRect MakeFullNormalizedRect() {
@@ -430,6 +463,11 @@ absl::Status RunAsyncMouthLandmarks() {
       roi_px = cv::Rect(0, 0, camera_frame.cols, camera_frame.rows);
     }
 
+    cv::Rect face_roi_px = roi_px;
+    if (absl::GetFlag(FLAGS_roi_mode) == "mouse") {
+      face_roi_px = ExpandMouthToFaceRect(roi_px, camera_frame.size());
+    }
+
     const auto current_display_time = Clock::now();
     const auto display_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -445,7 +483,7 @@ absl::Status RunAsyncMouthLandmarks() {
     FrameData frame_data;
     frame_data.bgr_frame = camera_frame.clone();
     frame_data.roi_px = roi_px;
-    frame_data.roi_rects = {MakeNormalizedRect(roi_px, camera_frame.size())};
+    frame_data.roi_rects = {MakeNormalizedRect(face_roi_px, camera_frame.size())};
     frame_data.timestamp_us = ++frame_counter * 33333;
     {
       std::lock_guard<std::mutex> lock(state.frame_mutex);
@@ -470,7 +508,12 @@ absl::Status RunAsyncMouthLandmarks() {
       DrawMouthLandmarks(landmarks, camera_frame, camera_frame.size(),
                          cv::Point(0, 0));
     }
-    cv::rectangle(camera_frame, roi_px, cv::Scalar(0, 255, 0), 2);
+    if (absl::GetFlag(FLAGS_roi_mode) == "mouse") {
+      cv::rectangle(camera_frame, face_roi_px, cv::Scalar(0, 255, 0), 2);
+      cv::rectangle(camera_frame, roi_px, cv::Scalar(255, 128, 0), 2);
+    } else {
+      cv::rectangle(camera_frame, roi_px, cv::Scalar(0, 255, 0), 2);
+    }
     DrawFps(camera_frame, display_fps, inference_fps);
     cv::imshow(kWindowName, camera_frame);
 
