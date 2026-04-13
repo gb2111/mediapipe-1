@@ -38,6 +38,9 @@
 
 namespace mediapipe::api3 {
 
+template <typename NodeT>
+class SubgraphContext;
+
 // `Graph` must be used whenever you want to build a MediaPipe graph in C++.
 //
 // `Graph` allows you to:

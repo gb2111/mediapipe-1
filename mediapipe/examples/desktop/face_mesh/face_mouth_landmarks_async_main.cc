@@ -118,7 +118,8 @@ void DrawFps(cv::Mat& frame, double display_fps, double inference_fps) {
 std::vector<int> BuildMouthIndices() {
   std::unordered_set<int> unique;
   for (const auto& connection :
-       mediapipe::tasks::vision::face_landmarker::kFaceLandmarksLips) {
+       mediapipe::tasks::vision::face_landmarker::FaceLandmarksConnections::
+           kFaceLandmarksLips) {
     unique.insert(connection[0]);
     unique.insert(connection[1]);
   }
@@ -141,7 +142,8 @@ void DrawMouthLandmarks(const mediapipe::NormalizedLandmarkList& landmarks,
   }
 
   for (const auto& connection :
-       mediapipe::tasks::vision::face_landmarker::kFaceLandmarksLips) {
+       mediapipe::tasks::vision::face_landmarker::FaceLandmarksConnections::
+           kFaceLandmarksLips) {
     if (connection[0] >= landmarks.landmark_size() ||
         connection[1] >= landmarks.landmark_size()) {
       continue;

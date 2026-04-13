@@ -37,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
+#include "mediapipe/util/graph_builder_utils.h"
 
 namespace mediapipe {
 namespace tasks {
