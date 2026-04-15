@@ -29,9 +29,7 @@ import com.google.mediapipe.formats.proto.RectProto.NormalizedRect;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /** Overlay that handles touch ROI and renders landmarks plus blendshapes. */
 public class HeadRoiOverlayView extends View {
@@ -39,8 +37,12 @@ public class HeadRoiOverlayView extends View {
     void onRoiChanged(NormalizedRect roiRect);
   }
 
-  private static final int MAX_BLENDSHAPES = 12;
-  private static final int TOP_BLENDSHAPES = 6;
+  // Lip landmark indices from MediaPipe 478-point face mesh (outer + inner lips).
+  private static final int[] MOUTH_LANDMARK_INDICES = {
+    0, 13, 14, 17, 37, 39, 40, 61, 78, 80, 81, 82, 84, 87, 88, 91, 95,
+    146, 178, 181, 185, 191, 267, 269, 270, 291, 308, 310, 311, 312, 314,
+    317, 318, 321, 324, 375, 402, 405, 409, 415
+  };
 
   private final Paint roiPaint = new Paint();
   private final Paint roiFillPaint = new Paint();
@@ -203,11 +205,11 @@ public class HeadRoiOverlayView extends View {
     canvas.drawText("Head ROI", activeRoi.left + 10f, Math.max(36f, activeRoi.top - 12f), textPaint);
     canvas.drawText(String.format("Infer FPS: %.1f", inferenceFps), 24f, 42f, textPaint);
 
-    if (landmarks != null) {
+    if (landmarks != null && landmarks.getLandmarkCount() > 0) {
       final float width = getWidth();
       final float height = getHeight();
-      for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
-        canvas.drawCircle(landmark.getX() * width, landmark.getY() * height, 4f, landmarkPaint);
+      for (NormalizedLandmark lm : landmarks.getLandmarkList()) {
+        canvas.drawCircle(lm.getX() * width, lm.getY() * height, 4f, landmarkPaint);
       }
     }
 
@@ -215,33 +217,59 @@ public class HeadRoiOverlayView extends View {
   }
 
   private void drawBlendshapePanel(Canvas canvas) {
-    final float panelWidth = Math.min(640f, getWidth() * 0.48f);
-    final float left = getWidth() - panelWidth - 20f;
-    final float top = 20f;
-    final float rowHeight = 34f;
-    final float panelHeight = Math.max(150f, 50f + displayedBlendshapes.size() * rowHeight);
-    final RectF panel = new RectF(left, top, left + panelWidth, top + panelHeight);
-    canvas.drawRoundRect(panel, 16f, 16f, panelPaint);
-    canvas.drawRoundRect(panel, 16f, 16f, panelStrokePaint);
-    canvas.drawText("Blendshapes", left + 18f, top + 34f, textPaint);
+    if (displayedBlendshapes.isEmpty()) {
+      return;
+    }
+    final int count = displayedBlendshapes.size();
+    final int colRows = (count + 1) / 2; // rows per column
+    final float rowHeight = 36f;
+    final float headerH = 42f;
+    final float padding = 16f;
+    final float panelHeight = headerH + colRows * rowHeight + padding;
+    final float panelTop = 0f;
+    final float panelWidth = getWidth();
 
-    final float nameLeft = left + 18f;
-    final float barLeft = left + panelWidth * 0.48f;
-    final float barWidth = panelWidth * 0.30f;
-    final float valueRight = left + panelWidth - 18f;
+    // Background
+    final RectF panel = new RectF(0f, panelTop, panelWidth, panelHeight);
+    canvas.drawRect(panel, panelPaint);
+    canvas.drawLine(0f, panelHeight, panelWidth, panelHeight, panelStrokePaint);
 
-    for (int i = 0; i < displayedBlendshapes.size(); ++i) {
-      Classification classification = displayedBlendshapes.get(i);
-      float rowTop = top + 48f + i * rowHeight;
-      float barTop = rowTop + 6f;
-      String label = classification.hasLabel() ? classification.getLabel() : "?";
-      canvas.drawText(label, nameLeft, rowTop + 22f, labelPaint);
-      RectF barRect = new RectF(barLeft, barTop, barLeft + barWidth, barTop + 18f);
-      canvas.drawRoundRect(barRect, 6f, 6f, barBgPaint);
-      RectF fillRect =
-          new RectF(barLeft, barTop, barLeft + barWidth * clamp(classification.getScore(), 0f, 1f), barTop + 18f);
-      canvas.drawRoundRect(fillRect, 6f, 6f, barFillPaint);
-      canvas.drawText(String.format("%.2f", classification.getScore()), valueRight, rowTop + 22f, valuePaint);
+    canvas.drawText("Mouth blendshapes", padding, panelTop + 30f, textPaint);
+
+    // Two columns
+    final float colWidth = panelWidth / 2f;
+    final float nameRatio = 0.44f;
+    final float barRatio = 0.30f;
+    final float valRatio = 0.14f; // right-aligned, remaining space
+
+    for (int i = 0; i < count; i++) {
+      final int col = i / colRows;
+      final int row = i % colRows;
+      final Classification cls = displayedBlendshapes.get(i);
+      final String label = cls.hasLabel() ? cls.getLabel() : "?";
+      final float score = cls.getScore();
+
+      final float colLeft = col * colWidth;
+      final float rowTop = panelTop + headerH + row * rowHeight;
+      final float textBaseline = rowTop + rowHeight - 8f;
+      final float barTop = rowTop + 8f;
+      final float barH = rowHeight - 18f;
+
+      final float nameLeft = colLeft + padding;
+      final float barLeft = colLeft + colWidth * nameRatio;
+      final float barWidth = colWidth * barRatio;
+      final float valueRight = colLeft + colWidth - padding;
+
+      canvas.drawText(label, nameLeft, textBaseline, labelPaint);
+
+      final RectF barRect = new RectF(barLeft, barTop, barLeft + barWidth, barTop + barH);
+      canvas.drawRoundRect(barRect, 4f, 4f, barBgPaint);
+      final float filled = barWidth * clamp(score, 0f, 1f);
+      if (filled > 0f) {
+        final RectF fillRect = new RectF(barLeft, barTop, barLeft + filled, barTop + barH);
+        canvas.drawRoundRect(fillRect, 4f, 4f, barFillPaint);
+      }
+      canvas.drawText(String.format("%.2f", score), valueRight, textBaseline, valuePaint);
     }
   }
 
@@ -285,27 +313,14 @@ public class HeadRoiOverlayView extends View {
     if (source == null || source.isEmpty()) {
       return Collections.emptyList();
     }
-    List<Classification> sorted = new ArrayList<>(source);
-    Collections.sort(sorted, Comparator.comparing(Classification::getScore).reversed());
-    Map<String, Classification> selected = new LinkedHashMap<>();
-    for (Classification classification : sorted) {
-      String label = classification.hasLabel() ? classification.getLabel() : "?";
-      if (selected.size() >= TOP_BLENDSHAPES) {
-        break;
-      }
-      selected.put(label, classification);
-    }
-    for (Classification classification : sorted) {
-      String label = classification.hasLabel() ? classification.getLabel() : "?";
-      if (!label.startsWith("mouth")) {
-        continue;
-      }
-      selected.put(label, classification);
-      if (selected.size() >= MAX_BLENDSHAPES) {
-        break;
+    List<Classification> mouth = new ArrayList<>();
+    for (Classification cls : source) {
+      if (cls.hasLabel() && cls.getLabel().startsWith("mouth")) {
+        mouth.add(cls);
       }
     }
-    return new ArrayList<>(selected.values());
+    // Keep original model order (stable, predictable layout).
+    return mouth;
   }
 
   private static float clamp(float value, float min, float max) {

@@ -24,8 +24,11 @@ import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.formats.proto.RectProto.NormalizedRect;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
+import com.google.mediapipe.framework.ProtoUtil;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Android app for manual Head ROI face landmarks + blendshapes. */
@@ -50,7 +53,16 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
   private long lastLandmarkTimestamp = Long.MIN_VALUE;
   private double smoothedInferFps = 0.0;
 
+  // Debug counters
+  private final AtomicInteger roiSentCount = new AtomicInteger(0);
+  private final AtomicInteger landmarkCallbackCount = new AtomicInteger(0);
+  private final AtomicLong lastLandmarkCallbackMs = new AtomicLong(0);
+
   private HeadRoiOverlayView overlayView;
+
+  static {
+    ProtoUtil.registerTypeName(NormalizedRect.class, "mediapipe.NormalizedRect");
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +83,17 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
           List<NormalizedLandmarkList> multiFaceLandmarks =
               PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
           updateInferenceFps(packet.getTimestamp());
+          int cbCount = landmarkCallbackCount.incrementAndGet();
+          lastLandmarkCallbackMs.set(System.currentTimeMillis());
+          int numFaces = multiFaceLandmarks.size();
+          int numLandmarks = numFaces > 0 ? multiFaceLandmarks.get(0).getLandmarkCount() : 0;
+          // Log every callback so we see if it fires at all, then throttle to every 30.
+          if (cbCount <= 5 || cbCount % 30 == 0) {
+            Log.d(TAG, "landmarks_cb #" + cbCount
+                + " ts=" + packet.getTimestamp()
+                + " faces=" + numFaces
+                + " landmarks[0]=" + numLandmarks);
+          }
           NormalizedLandmarkList landmarks =
               multiFaceLandmarks.isEmpty()
                   ? NormalizedLandmarkList.getDefaultInstance()
@@ -96,8 +119,29 @@ public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
         (timestamp) -> {
           Packet roiPacket = null;
           try {
-            roiPacket = processor.getPacketCreator().createProto(currentRoi.get());
+            NormalizedRect roi = currentRoi.get();
+            roiPacket = processor.getPacketCreator().createProto(roi);
             processor.getGraph().addPacketToInputStream(INPUT_ROI_STREAM_NAME, roiPacket, timestamp);
+            int sent = roiSentCount.incrementAndGet();
+            // Log first 5 sends and then every 60 frames.
+            if (sent <= 5 || sent % 60 == 0) {
+              Log.d(TAG, "roi_sent #" + sent
+                  + " ts=" + timestamp
+                  + " cx=" + roi.getXCenter()
+                  + " cy=" + roi.getYCenter()
+                  + " w=" + roi.getWidth()
+                  + " h=" + roi.getHeight());
+              // Warn if landmark callback hasn't fired for > 3 s.
+              long lastCbMs = lastLandmarkCallbackMs.get();
+              if (lastCbMs == 0) {
+                Log.w(TAG, "landmarks_cb has NEVER fired after " + sent + " frames");
+              } else {
+                long silenceMs = System.currentTimeMillis() - lastCbMs;
+                if (silenceMs > 3000) {
+                  Log.w(TAG, "landmarks_cb silent for " + silenceMs + " ms");
+                }
+              }
+            }
           } catch (RuntimeException e) {
             Log.e(TAG, "Failed to send Head ROI packet.", e);
           } finally {

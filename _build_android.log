@@ -1,0 +1,109 @@
+Checking bazel... 
+C:\Users\gregb\AppData\Roaming\npm\bazel
+C:\Users\gregb\AppData\Roaming\npm\bazel.cmd
+C:\Users\gregb\AppData\Roaming\npm\bazel.exe
+Bazelisk version: v1.25.0
+Starting local Bazel server and connecting to it...
+Build label: 7.4.1
+Build target: @@//src/main/java/com/google/devtools/build/lib/bazel:BazelServer
+Build time: Mon Nov 11 21:27:28 2024 (1731360448)
+Build timestamp: 1731360448
+Build timestamp as int: 1731360448
+Starting build... 
+Computing main repo mapping: 
+Computing main repo mapping: 
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/py/python_repo.bzl:87:10: 
+=============================
+Hermetic Python configuration:
+Version: "3.12"
+Kind: ""
+Interpreter: "default" (provided by rules_python)
+Requirements_lock label: "@python_version_repo//:requirements_lock_3_12.txt"
+=====================================
+Computing main repo mapping: 
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'XNNPACK' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'KleidiAI' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'pthreadpool' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'cpuinfo' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'com_google_protobuf' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'com_google_googletest' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'com_github_gflags_gflags' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'zlib' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'rules_android_ndk' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'build_bazel_rules_apple' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'pybind11' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'pybind11_protobuf' because it already exists.
+DEBUG: C:/users/gregb/_bazel_gregb/au7dswig/external/org_tensorflow/third_party/repo.bzl:132:14: 
+Warning: skipping import of repository 'com_github_glog_glog' because it already exists.
+Computing main repo mapping: 
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (1 packages loaded, 0 targets configured)
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (1 packages loaded, 0 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (41 packages loaded, 16 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (67 packages loaded, 319 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (100 packages loaded, 1899 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (154 packages loaded, 2939 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (232 packages loaded, 4545 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (294 packages loaded, 8850 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (296 packages loaded, 10363 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (296 packages loaded, 12439 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (298 packages loaded, 12496 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (300 packages loaded, 19342 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (300 packages loaded, 20450 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (300 packages loaded, 20450 targets configured)
+
+Analyzing: target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (301 packages loaded, 20829 targets configured)
+
+INFO: Analyzed target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu (301 packages loaded, 20830 targets configured).
+[50 / 3,399] checking cached actions
+[4,181 / 4,228] [Prepa] Building mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar (2 source files)
+[4,216 / 4,228] Building mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar (2 source files); 1s multiplex-worker
+INFO: From Building mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar (2 source files):
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+[4,217 / 4,228] [Prepa] Desugaring mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar for Android
+[4,217 / 4,228] Desugaring mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar for Android; 1s worker
+[4,218 / 4,228] [Prepa] Dexing mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar_desugared.jar with applicable dexopts []
+[4,219 / 4,228] Dexing mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/libfaceheadroigpu.jar_desugared.jar with applicable dexopts []; 1s local ... (2 actions running)
+[4,220 / 4,228] Extracting Java resources from deploy jar for apk; 2s local ... (2 actions running)
+[4,226 / 4,234] Extracting Java resources from deploy jar for apk; 3s local ... (2 actions running)
+[4,227 / 4,234] DexMerger mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/dexfiles/faceheadroigpu/1.shard.zip; 4s local
+[4,228 / 4,234] [Prepa] Writing file mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/_dx/faceheadroigpu/classes.dex.zip-2.params
+[4,230 / 4,234] Generating unsigned apk; 1s local
+[4,231 / 4,234] [Prepa] Generating unsigned apk
+INFO: Found 1 target...
+[4,234 / 4,234] no actions running
+Target //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu up-to-date:
+  bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/faceheadroigpu_deploy.jar
+  bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/faceheadroigpu_unsigned.apk
+  bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/faceheadroigpu.apk
+INFO: Elapsed time: 67.938s, Critical Path: 28.52s
+INFO: 14 processes: 2 internal, 10 local, 2 worker.
+INFO: Build completed successfully, 14 total actions
+Build exit code: 0 
