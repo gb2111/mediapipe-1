@@ -89,6 +89,24 @@ rules_shell_toolchains()
 
 load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")  # @unused
 
+# Local Android SDK/NDK configuration for Bazel Android builds on this machine.
+android_sdk_repository(
+    name = "androidsdk",
+    path = "C:/Users/gregb/AppData/Local/Android/Sdk",
+)
+
+android_ndk_repository(
+    name = "androidndk",
+    api_level = 21,
+    path = "C:/Users/gregb/AppData/Local/Android/Sdk/ndk/android-ndk-r28b",
+)
+
+# See https://github.com/bazelbuild/rules_android_ndk/issues/31#issuecomment-1396182185
+bind(
+    name = "android/crosstool",
+    actual = "@androidndk//:toolchain",
+)
+
 http_archive(
     name = "build_bazel_rules_apple",
     patch_args = [

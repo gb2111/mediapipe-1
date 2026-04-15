@@ -62,9 +62,27 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "head_roi_mobile_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/util:single_normalized_rect_to_rect_vector_calculator",
+        "//mediapipe/calculators/util:to_image_calculator",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_roi_graph",
+    ],
+)
+
 mediapipe_binary_graph(
     name = "face_mesh_mobile_gpu_binary_graph",
     graph = "face_mesh_mobile.pbtxt",
     output_name = "face_mesh_mobile_gpu.binarypb",
     deps = [":mobile_calculators"],
+)
+
+mediapipe_binary_graph(
+    name = "face_head_roi_mobile_gpu_binary_graph",
+    graph = "face_head_roi_mobile_gpu.pbtxt",
+    output_name = "face_head_roi_mobile_gpu.binarypb",
+    deps = [":head_roi_mobile_calculators"],
 )

@@ -1475,6 +1475,17 @@ cc_library(
 )
 
 cc_library(
+    name = "single_normalized_rect_to_rect_vector_calculator",
+    srcs = ["single_normalized_rect_to_rect_vector_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "to_image_calculator",
     srcs = ["to_image_calculator.cc"],
     hdrs = ["to_image_calculator.h"],

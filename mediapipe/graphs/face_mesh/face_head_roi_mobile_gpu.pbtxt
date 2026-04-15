@@ -1,0 +1,62 @@
+# MediaPipe graph that performs face landmarking with a manually supplied Head ROI.
+
+input_stream: "input_video"
+input_stream: "roi_rect"
+
+output_stream: "output_video"
+output_stream: "multi_face_landmarks"
+output_stream: "blendshapes"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+node {
+  calculator: "PassThroughCalculator"
+  input_stream: "throttled_input_video"
+  output_stream: "output_video"
+}
+
+node {
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_GPU:throttled_input_video"
+  output_stream: "IMAGE:throttled_input_image"
+}
+
+node {
+  calculator: "SingleNormalizedRectToRectVectorCalculator"
+  input_stream: "roi_rect"
+  output_stream: "roi_rects"
+}
+
+node {
+  calculator: "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerRoiGraph"
+  input_stream: "IMAGE:throttled_input_image"
+  input_stream: "NORM_RECT:roi_rects"
+  output_stream: "NORM_LANDMARKS:multi_face_landmarks"
+  output_stream: "BLENDSHAPES:blendshapes"
+  options {
+    [mediapipe.tasks.vision.face_landmarker.proto.FaceLandmarkerGraphOptions.ext] {
+      base_options {
+        model_asset {
+          file_name: "face_landmarker_v2_with_blendshapes.task"
+        }
+        use_stream_mode: true
+      }
+      face_detector_graph_options {
+        num_faces: 1
+      }
+      face_landmarks_detector_graph_options {
+        min_detection_confidence: 0.0
+        disable_presence_gating: true
+      }
+    }
+  }
+}
