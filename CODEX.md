@@ -1,5 +1,11 @@
 # Codex Notes (MediaPipe2)
 
+## Maintenance Rule
+- On every commit, update `CODEX.md`.
+- Update the main sections when the current project state, build flow, runtime behavior, or important defaults have changed.
+- Also append a short entry at the bottom in `Change Log` describing what changed in that commit.
+- Keep `CODEX.md` as the persistent handoff note for future Codex sessions.
+
 ## Current Build Command (Windows, CPU-only)
 Run from repo root `D:\Repos\GitHub\mediapipe2`:
 
@@ -37,3 +43,7 @@ Notes:
 - Graph logic: `mediapipe/tasks/cc/vision/face_landmarker/face_landmarks_detector_graph.cc`
 - Model download script: `download_face_landmarker_task.bat`
 
+## Change Log
+- 2026-04-15: Added `CODEX.md` with the working Windows build command, current runner summary, and key file references.
+- 2026-04-15: Updated runner terminology to use Head ROI, kept one ROI path, and confirmed a successful long build (~95s).
+- 2026-04-15: Added the rule that every future commit must also update `CODEX.md`, including both the main summary when needed and this changelog.
