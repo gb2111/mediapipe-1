@@ -101,6 +101,44 @@ bazel test //mediapipe/path:target_test --test_output=streamed
 
 ---
 
+## Android Build — faceheadroigpu (Windows)
+
+Building for Android on Windows requires specific flags to prevent MSVC flags from leaking into the Android ARM64 clang cross-compiler.
+
+**Use `_build_faceheadroigpu.bat`** (committed) or the equivalent bash command:
+
+```bash
+export PATH="/c/Program Files/Android/Android Studio/jbr/bin:/c/Users/gregb/AppData/Local/Android/Sdk/platform-tools:$PATH"
+MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" \
+bazel build \
+  --noenable_platform_specific_config \
+  -c opt --config=android_arm64 \
+  --java_runtime_version=remotejdk_17 \
+  --tool_java_runtime_version=remotejdk_17 \
+  "--repo_env=PYTHON_BIN_PATH=D:/Repos/GitHub/mediapipe2/.python312/python.exe" \
+  "--repo_env=HERMETIC_PYTHON_VERSION=3.12" \
+  --worker_extra_flag="Desugar=--jvm_flag=-Xmx1g" \
+  //mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu:faceheadroigpu
+```
+
+Key flags explained:
+- `--noenable_platform_specific_config` — prevents Windows MSVC copts (`/w`, `/D_USE_MATH_DEFINES`, `/std:c++20`) from leaking into the Android clang cross-compiler
+- `--host_cxxopt=/std:c++20`, `--host_copt=/D_USE_MATH_DEFINES` — set in `.user.bazelrc` for host (MSVC) compilation
+- `HERMETIC_PYTHON_VERSION=3.12` — TF hermetic Python requires 3.12; Python 3.12 embedded is in `.python312/`
+- `--worker_extra_flag="Desugar=--jvm_flag=-Xmx1g"` — limits JVM heap for Android Desugar worker (avoids paging file exhaustion)
+- Android Studio JBR must be on PATH for Java toolchain
+
+**Deploy:**
+```bash
+adb install -r bazel-bin/mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/faceheadroigpu.apk
+```
+
+**App sources:** `mediapipe/examples/android/src/java/com/google/mediapipe/apps/faceheadroigpu/`
+- `MainActivity.java` — streams ROI rect, receives landmarks + blendshapes packets
+- `HeadRoiOverlayView.java` — touch-to-set ROI, renders landmarks, blendshape panel (mouth + jaw) at top of screen
+
+---
+
 ## Additional Documentation
 
 Consult these files when working on the relevant area:

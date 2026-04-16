@@ -33,6 +33,8 @@ import java.util.List;
 
 /** Overlay that handles touch ROI and renders landmarks plus blendshapes. */
 public class HeadRoiOverlayView extends View {
+  private static final float BLENDSHAPE_PANEL_HEIGHT_SCALE = 1.43f;
+
   public interface RoiChangeListener {
     void onRoiChanged(NormalizedRect roiRect);
   }
@@ -222,9 +224,9 @@ public class HeadRoiOverlayView extends View {
     }
     final int count = displayedBlendshapes.size();
     final int colRows = (count + 1) / 2; // rows per column
-    final float rowHeight = 36f;
-    final float headerH = 42f;
-    final float padding = 16f;
+    final float rowHeight = 36f * BLENDSHAPE_PANEL_HEIGHT_SCALE;
+    final float headerH = 42f * BLENDSHAPE_PANEL_HEIGHT_SCALE;
+    final float padding = 16f * BLENDSHAPE_PANEL_HEIGHT_SCALE;
     final float panelHeight = headerH + colRows * rowHeight + padding;
     final float panelTop = 0f;
     final float panelWidth = getWidth();
@@ -234,7 +236,8 @@ public class HeadRoiOverlayView extends View {
     canvas.drawRect(panel, panelPaint);
     canvas.drawLine(0f, panelHeight, panelWidth, panelHeight, panelStrokePaint);
 
-    canvas.drawText("Mouth blendshapes", padding, panelTop + 30f, textPaint);
+    final float titleBaseline = panelTop + headerH - padding * 0.5f;
+    canvas.drawText("Mouth + Jaw blendshapes", padding, titleBaseline, textPaint);
 
     // Two columns
     final float colWidth = panelWidth / 2f;
@@ -251,9 +254,10 @@ public class HeadRoiOverlayView extends View {
 
       final float colLeft = col * colWidth;
       final float rowTop = panelTop + headerH + row * rowHeight;
-      final float textBaseline = rowTop + rowHeight - 8f;
-      final float barTop = rowTop + 8f;
-      final float barH = rowHeight - 18f;
+      final float rowInnerPadding = Math.max(6f, rowHeight * 0.18f);
+      final float textBaseline = rowTop + rowHeight - rowInnerPadding;
+      final float barTop = rowTop + rowInnerPadding;
+      final float barH = rowHeight - rowInnerPadding * 2f;
 
       final float nameLeft = colLeft + padding;
       final float barLeft = colLeft + colWidth * nameRatio;
@@ -313,14 +317,17 @@ public class HeadRoiOverlayView extends View {
     if (source == null || source.isEmpty()) {
       return Collections.emptyList();
     }
-    List<Classification> mouth = new ArrayList<>();
+    List<Classification> result = new ArrayList<>();
     for (Classification cls : source) {
-      if (cls.hasLabel() && cls.getLabel().startsWith("mouth")) {
-        mouth.add(cls);
+      if (cls.hasLabel()) {
+        String label = cls.getLabel();
+        if (label.startsWith("mouth") || label.startsWith("jaw")) {
+          result.add(cls);
+        }
       }
     }
     // Keep original model order (stable, predictable layout).
-    return mouth;
+    return result;
   }
 
   private static float clamp(float value, float min, float max) {
