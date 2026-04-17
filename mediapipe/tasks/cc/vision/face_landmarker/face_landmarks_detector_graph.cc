@@ -160,9 +160,11 @@ void ConfigureLandmarksSmoothingCalculator(
   // Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter when
   // landmark is static.
   options.mutable_one_euro_filter()->set_min_cutoff(0.05f);
-  // Beta 80.0 in combination with min_cutoff 0.05 results into ~0.94
-  // alpha in landmark EMA filter when landmark is moving fast.
-  options.mutable_one_euro_filter()->set_beta(80.0f);
+  // Beta reduced from 80.0 to 8.0 to suppress landmark jumps when upper face
+  // is occluded (e.g. by a VR helmet). Original 80.0 let fast jumps pass
+  // almost unfiltered; 8.0 keeps mouth/jaw movements responsive while
+  // damping noise from the covered eye/forehead region.
+  options.mutable_one_euro_filter()->set_beta(30.0f);
   // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
   // EMA filter.
   options.mutable_one_euro_filter()->set_derivate_cutoff(1.0f);
