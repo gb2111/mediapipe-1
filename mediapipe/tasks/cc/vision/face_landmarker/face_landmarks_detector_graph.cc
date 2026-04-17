@@ -137,10 +137,12 @@ void ConfigureTensorsToFaceLandmarksGraph(
 
 void ConfigureFaceDetectionsToRectsCalculator(
     mediapipe::DetectionsToRectsCalculatorOptions* options) {
-  // Left side of left eye.
-  options->set_rotation_vector_start_keypoint_index(33);
-  // Right side of right eye.
-  options->set_rotation_vector_end_keypoint_index(263);
+  // Left mouth corner (landmark 61) — visible even when upper face is occluded
+  // (e.g. by a VR helmet). Previously used eye corners (33, 263) which lie in
+  // the occlusion zone and produced garbage rotation values.
+  options->set_rotation_vector_start_keypoint_index(61);
+  // Right mouth corner (landmark 291).
+  options->set_rotation_vector_end_keypoint_index(291);
   options->set_rotation_vector_target_angle_degrees(0);
 }
 
